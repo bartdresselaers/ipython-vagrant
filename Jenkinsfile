@@ -1,33 +1,25 @@
 pipeline {
     agent any
     stages {
-        stage('No-op') {
+        /* "Build" and "Test" stages omitted */
+
+        stage('Deploy - Staging') {
             steps {
-                sh 'ls'
+                sh './deploy staging'
+                sh './run-smoke-tests'
             }
         }
-    }
-    post {
-        always {
-            echo 'One way or another, I have finished'
-            mail to: 'bart.dresselaers@medialaan.be',
-            subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-            body: "Something is wrong with ${env.BUILD_URL}"
+
+        stage('Sanity check') {
+            steps {
+                input "Does the staging environment look ok?"
+            }
         }
-        success {
-            echo 'I succeeeded!'
-        }
-        unstable {
-            echo 'I am unstable :/'
-        }
-        failure {
-            echo 'I failed :('
-	    mail to: 'bart.dresselaers@medialaan.be',
-            subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-            body: "Something is wrong with ${env.BUILD_URL}"
-        }
-        changed {
-            echo 'Things were different before...'
+
+        stage('Deploy - Production') {
+            steps {
+                sh './deploy production'
+            }
         }
     }
 }
